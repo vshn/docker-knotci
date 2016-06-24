@@ -3,11 +3,20 @@ services:
   - docker:dind
 
 knotci:
-  stage: build
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.vshn.net
     - docker build -t registry.vshn.net/vshn-docker/knotci .
     - docker push registry.vshn.net/vshn-docker/knotci
+  tags:
+    - dockerbuild
+
+knotci:tag:
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.vshn.net
+    - docker build -t registry.vshn.net/vshn-docker/knotci:$CI_BUILD_TAG .
+    - docker push registry.vshn.net/vshn-docker/knotci:$CI_BUILD_TAG
+  only:
+    - tags
   tags:
     - dockerbuild
 
