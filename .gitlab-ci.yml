@@ -1,0 +1,22 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker build -t registry.vshn.net/vshn-docker/knotci .
+  tags:
+    - dockerbuild
+
+deploy:
+  stage: deploy
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.vshn.net
+    - docker push registry.vshn.net/vshn-docker/knotci
+  tags:
+    - dockerbuild
