@@ -4,8 +4,8 @@
 if [ -z "$SSH_USER" ]; then
   SSH_USER="knot"
 fi
-if [ -z "$RSYNC_DEST_DIR" ]; then
-  RSYNC_DEST_DIR="zones"
+if [ -z "$DEST_DIR" ]; then
+  DEST_DIR="zones"
 fi
 
 if [ -z "$NS_HIDDENMASTER" ]; then
@@ -27,8 +27,8 @@ mkdir -p ~/.ssh && echo -e "Host *\n\tStrictHostKeyChecking no\n\tLogLevel=quiet
   
 rm -rf current
 mkdir current
-log_info1 "fetching current zone files from ${SSH_USER}@${NS_HIDDENMASTER}:${RSYNC_DEST_DIR}/"
-scp "${SSH_USER}@${NS_HIDDENMASTER}:${RSYNC_DEST_DIR}/*.zone" current/
+log_info1 "fetching current zone files from ${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}/"
+scp "${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}/*.zone" current/
 rc=$?; if [[ $rc != 0 ]]; then echo "scp failed with $rc"; exit 1; fi
 
 for file in current/*.zone; do
@@ -93,8 +93,8 @@ for file in "${modified[@]}"; do
 done
 
 if [ ${#modified[@]} -gt 0 ]; then
-  log_info1 "copying modified zones to ${SSH_USER}@${NS_HIDDENMASTER}:${RSYNC_DEST_DIR}"
-  scp "${modified[@]}" "${SSH_USER}@${NS_HIDDENMASTER}:${RSYNC_DEST_DIR}/"
+  log_info1 "copying modified zones to ${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}"
+  scp "${modified[@]}" "${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}/"
   rc=$?; if [[ $rc != 0 ]]; then echo "scp failed with $rc"; exit 1; fi
 else
   log_info1 "no modified zone files"
