@@ -56,6 +56,7 @@ for file in *.zone; do
   fi
 done
 
+exitcode=0
 modified=()
 modified_ok=()
 modified_error_format=()
@@ -136,12 +137,12 @@ for file in "${modified_ok[@]}"; do
   zone="${file%.zone}"
   log_info1 "reloading zone ${zone} with knotc"
   ssh "$SSH_USER"@"$NS_HIDDENMASTER" "bash -c 'sudo knotc zone-reload \"${zone}\"; sudo knotc zone-status \"${zone}\"'"
-  rc=$?; if [[ $rc != 0 ]]; then echo "zone reload failed with $rc"; finalrc=1; fi
+  rc=$?; if [[ $rc != 0 ]]; then echo "zone reload failed with $rc"; exitcode=1; fi
 done
 
 # Delete orphaned zone files
 for file in current/*.zone; do
-  file_basename=$(basename $file)
+  file_basename="$(basename "${file}")"
   zone="${file_basename%.zone}"
   if ! test -e "${file_basename}"; then
     log_info1 "removing orphaned zone ${zone} from ${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}"
@@ -150,7 +151,6 @@ for file in current/*.zone; do
 done
 
 # Log broken zones (again)
-exitcode=0
 for file in "${modified_error_format[@]}"; do
   log_info2 "FIX IT: zone format of ${file}"
   exitcode=1
