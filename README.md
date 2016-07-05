@@ -2,7 +2,35 @@
 
 ## CI/CD Flow
 
-The script `build.sh` available in this Docker image can do the following tasks:
+The CI/CD flow works like this:
+
+1. Detect changes in the zone files by comparing them to the state on the hidden master
+1. Replace the magic token `1 ; SERIALAUTOUPDATE` with the current unix timestamp
+1. Send new or modified zones to the hidden master and let knot refresh these zones
+1. Remove deleted zones from the hidden master
+
+The CI process is configured in the hidden file `.gitlab-ci.yml` (see example below).
+
+### Example `.gitlab-ci.yml`
+
+```
+image: communityrack/knotci:v1.1.3
+
+zonedelivery:
+  script:
+    - build.sh
+  only:
+    - master
+```
+
+## Manually running scripts
+
+The CI task is executed in a Docker container, therefore just start a Docker image and
+run the script in there:
+
+`docker run --rm -it -v FULLPATHTOZONEFILES:/zones communityrack/knotci bash`
+
+### build.sh
 
 1. Get the current state from the master
   1. Download zone files via scp
@@ -18,76 +46,9 @@ The script `build.sh` available in this Docker image can do the following tasks:
 1. Reload all modified zones and get the status
 1. Delete all orphaned zone files on the master
 
-The CI process is configured in the hidden file `.gitlab-ci.yml` (see example below).
-
-### Example `.gitlab-ci.yml`
-
-```
-image: communityrack/knotci
-
-zonedelivery:
-  script:
-    - buildzones.sh
-    - checkzones.sh
-    - deployzones.sh
-  artifacts:
-    paths:
-      - '*.zone'
-  cache:
-    paths:
-      - .lasthash
-      - .oldserials
-  only:
-    - master
-```
-
-## Manually running scripts
-
-The CI tasks are executed in a Docker container, therefore just start a Docker image and
-run the scripts in there:
-
-`docker run --rm -it -v FULLPATHTOZONEFILES:/zones communityrack/knotci bash`
-
-All scripts accept the argument `allzones`. If set, it will act on all zones, not only
-on the changed ones.
-
-### buildzones.sh
-
-When executed without parameters, it updates the serial on all files changed since last HEAD
-(`HEAD HEAD~1`) or since last push when `.lasthash` exists. The parameter `allzones` can be used
-to update the serial on all zone files which contain the string `1 ; SERIALAUTOUPDATE`.
-It also restores the last serials which it gets from the cached file `.oldserials`.
-
 Environment variables used:
 
-* `MAGICSTRING`: Magicstring for updating zone serial. Default: `1 ; SERIALAUTOUPDATE`
-
-### checkzones.sh
-
-This scripts validates the zonefiles with `named-checkzone` and compares the serial
-to the hidden master. The hidden master is configured in the environment variable `NS_HIDDENMASTER`.
-To run this script manually, set `NS_HIDDENMASTER` to the address of the hidden master. F.e.:
-
-`NS_HIDDENMASTER=myns.myzone.tld checkzones.sh`
-
-Environment variables used:
-
-* `NS_HIDDENMASTER`: name of the DNS hidden master
-
-### deployzones.sh
-
-Rsyncs all changed files to the hidden master and cleans up the remote (`--delete` option).
-The SSH key is taken from the envionment variable `SSH_PRIVATE_KEY` and the hidden master
-from `NS_HIDDENMASTER`.
-
-After a successfull sync, all changed zones are reloaded (same mechanism to detect changed zones
-as in `buildzones.sh`). To make a full sync and reload all zones, use the `allzones` command line
-parameter.
-
-Environment variables used:
-
-* `NS_HIDDENMASTER`: name of the DNS hidden master
-* `SSH_USER`: name of the remote SSH user. Default: knot
-* `SSH_PRIVATE_KEY`: Private key of the remote SSH user
-* `RSYNC_DEST_DIR`: destination directory to sync zonefiles to. Default: zones
-
+* `SSH_USER`: The SSH user to log into. Default: `knot`
+* `DEST_DIR`: The destination dir relative the the user's home directory. Default: `zones`
+* `NS_HIDDENMASTER`: The host name of the hidden master to SSH into. Required, no default.
+* `SSH_PRIVATE_KEY`: The private key used to log into the hidden master. Required, no default.
