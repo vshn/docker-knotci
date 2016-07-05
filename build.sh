@@ -128,7 +128,7 @@ if [ ${#modified_ok[@]} -gt 0 ]; then
   scp "${modified_ok[@]}" "${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}/"
   rc=$?; if [[ $rc != 0 ]]; then echo "scp failed with $rc"; exit 1; fi
 else
-  log_info1 "no modified and valid zone files"
+  log_info1 "no zone files to be deployed"
 fi
 
 # Reload zones
@@ -137,6 +137,16 @@ for file in "${modified_ok[@]}"; do
   log_info1 "reloading zone ${zone} with knotc"
   ssh "$SSH_USER"@"$NS_HIDDENMASTER" "bash -c 'sudo knotc zone-reload \"${zone}\"; sudo knotc zone-status \"${zone}\"'"
   rc=$?; if [[ $rc != 0 ]]; then echo "zone reload failed with $rc"; finalrc=1; fi
+done
+
+# Delete orphaned zone files
+for file in current/*.zone; do
+  file_basename=$(basename $file)
+  zone="${file_basename%.zone}"
+  if ! test -e "${file_basename}"; then
+    log_info1 "removing orphaned zone ${zone} from ${SSH_USER}@${NS_HIDDENMASTER}:${DEST_DIR}"
+    ssh "$SSH_USER"@"$NS_HIDDENMASTER" "rm -f ${DEST_DIR}/${zone}.zone ${zone}.db"
+  fi
 done
 
 # Log broken zones (again)
