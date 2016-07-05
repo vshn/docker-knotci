@@ -2,21 +2,23 @@
 
 ## CI/CD Flow
 
-The scripts available in this Docker image can do the following tasks:
+The script `build.sh` available in this Docker image can do the following tasks:
 
-1. `buildzones.sh`: Substitute `1 ; SERIALAUTOUPDATE` with the current Unix
-   timestamp on all changed *.zone files since last push.
-2. `checkzones.sh`: Validate zonefiles:
-  1. Check all *.zone files with `named-checkzone` for errors
-  2. Compare currently active serial with new serial on all changed zonefiles
-3. `deployzones.sh`:
-  1. Rsync all changed zonefiles to hidden master defined in environment variable `NS_HIDDENMASTER`
-  2. Reload all changed zones and show currently loaded zone info
-  3. Save current git hash into `.lasthash`
+1. Get the current state from the master
+  1. Download zone files via scp
+  1. Reset serial numbers to 1 (needed to compare zone files with current versions)
+1. Reset serial numbers in current versions of zone files (should not do anything, because serial should always be 1)
+1. Compares current versions with state from the master
+  1. Creates a list of modified zones
+1. Update serial numbers of all modified zones to the current unix timestamp
+1. Validate all modified zones
+  1. Is the zone data valid?
+  1. Is the serial number larger than the currently deployed serial number?
+1. Copy all modified zones to the master
+1. Reload all modified zones and get the status
+1. Delete all orphaned zone files on the master
 
-The CI process is configured in the hidden file `.gitlab-ci.yml`. (see example below)
-All scripts are reading the hidden file `.lasthash` to find out which was the last `HEAD`
-checked out. The content of this file will be used to find the changed files to act upon.
+The CI process is configured in the hidden file `.gitlab-ci.yml` (see example below).
 
 ### Example `.gitlab-ci.yml`
 
