@@ -98,7 +98,7 @@ for file in "${modified[@]}"; do
   current_serial="$(dig +short "${zone}" soa "@${NS_HIDDENMASTER}" | awk '{print $3}')"
   if [ -z "${current_serial}" ]; then 
     log_info1 "SKIPPING - ${zone} - current serial not found"
-    modified_ok=($file)
+    modified_ok+=($file)
     continue
   fi
 
