@@ -14,7 +14,7 @@ The CI process is configured in the hidden file `.gitlab-ci.yml` (see example be
 ### Example `.gitlab-ci.yml`
 
 ```
-image: communityrack/knotci:v1.1.3
+image: registry.vshn.net/vshn-docker/knotci:v1.1.4
 
 zonedelivery:
   script:
@@ -28,7 +28,7 @@ zonedelivery:
 The CI task is executed in a Docker container, therefore just start a Docker image and
 run the script in there:
 
-`docker run --rm -it -v FULLPATHTOZONEFILES:/zones communityrack/knotci bash`
+`docker run --rm -it -v FULLPATHTOZONEFILES:/zones registry.vshn.net/vshn-docker/knotci:v1.1.4 bash`
 
 ### build.sh
 
