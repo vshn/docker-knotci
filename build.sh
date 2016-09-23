@@ -46,7 +46,7 @@ log_info1 "setting up a temporary SSH agent for ${SSH_USER}@${NS_HIDDENMASTER}"
 eval "$(ssh-agent -s)" > /dev/null 2>&1
 ssh-add <(echo "$SSH_PRIVATE_KEY") > /dev/null 2>&1
 mkdir -p ~/.ssh && echo -e "Host *\n\tStrictHostKeyChecking no\n\tLogLevel=quiet\n\n" > ~/.ssh/config
-  
+
 # Fetch zone files from master
 rm -rf current
 mkdir current
@@ -88,8 +88,8 @@ for file in "${modified[@]}"; do
     log_info1 "setting serial to ${zoneserial} in ${file}"
     sed -i "s/[0-9]\+${MAGIC_STRING}/${zoneserial}${MAGIC_STRING}/" "${file}"
   fi
-  
-  # this mimicks the knot-zone-expand-aliases script, see 
+
+  # this mimicks the knot-zone-expand-aliases script, see
   # https://git.vshn.net/vshn-puppet/profile_knot/raw/master/files/knot-zone-expand-aliases
   # for explanations
   out="${file}.expanded"
@@ -126,16 +126,17 @@ for file in "${modified[@]}"; do
   zone="${file%.zone}"
 
   # Zone format check
-  named-checkzone -i local "${zone}" "${file}" > /dev/null
+  result=$(named-checkzone -i local "${zone}" "${file}")
   if [ $? -ne 0 ]; then
-    log_info2 "NOT PASSED - ${zone} - not a valid zone file"
+    log_info2 "NOT PASSED - ${zone} - not a valid zone file. Errors:"
+    echo $result
     modified_error_format+=($file)
     continue
   fi
 
   # Find current active serial on hidden master - skip check if not there
   current_serial="$(dig +short "${zone}" soa "@${NS_HIDDENMASTER}" | awk '{print $3}')"
-  if [ -z "${current_serial}" ]; then 
+  if [ -z "${current_serial}" ]; then
     log_info1 "SKIPPING - ${zone} - current serial not found"
     modified_ok+=($file)
     continue
@@ -143,7 +144,7 @@ for file in "${modified[@]}"; do
 
   # Find new serial
   new_serial="$(named-checkzone -i none "${zone}" "${file}" | grep "loaded serial" | awk '{print $5}' | tr -cd 0-9)"
-  if [ "${new_serial}" == "" ]; then 
+  if [ "${new_serial}" == "" ]; then
     log_info2 "NOT PASSED - ${zone} - new serial not found"
     modified_error_serial+=($file)
     continue
