@@ -1,5 +1,6 @@
 # Automation Script for Knot CI
 
+
 ## CI/CD Flow
 
 The CI/CD flow works like this:
