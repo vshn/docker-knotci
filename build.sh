@@ -151,14 +151,16 @@ for file in "${modified[@]}"; do
   fi
 
   # Compare new and active serial
-  if [ "${new_serial}" -gt "${current_serial}" ]; then
+  mod_diff=$(( ( (2**32) + new_serial - current_serial) % (2**32) ))
+  if (( new_serial == current_serial )); then
+    log_info1 "NOT PASSED - ${zone} - new serial ${new_serial} is the same as the currently active serial ${current_serial}."
+    modified_error_serial+=($file)
+  elif (( new_serial < 2**32 && mod_diff < 2**31 )); then
     log_info1 "PASSED - ${zone} - new serial ${new_serial} is higher than currently active serial ${current_serial}"
     modified_ok+=($file)
-  elif [ $(( current_serial + 2147483647 )) -ge 4294967296 ] && [ $(( (current_serial + 2147483647) % 4294967296 )) -ge "${new_serial}" ]; then
-    log_info1 "PASSED - ${zone} - new serial ${new_serial} rolled over from current serial ${current_serial}"
-    modified_ok+=($file)
   else
-    log_info2 "NOT PASSED - ${zone} - new serial ${new_serial} is NOT higher than currently active serial ${current_serial}"
+    rollover_serial=$(((current_serial + 2**31 - 1) % 2**32))
+    log_info1 "NOT PASSED - ${zone} - new serial ${new_serial} is NOT higher than currently active serial ${current_serial}. You may need to do a serial number rollover: Use serial number (${current_serial} + 2^31 - 1) % 2^32 = ${rollover_serial} for rollover"
     modified_error_serial+=($file)
   fi
 done
