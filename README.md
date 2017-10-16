@@ -29,7 +29,7 @@ zonedelivery:
 The CI task is executed in a Docker container, therefore just start a Docker image and
 run the script in there:
 
-`docker run --rm -it -v FULLPATHTOZONEFILES:/zones registry.vshn.net/vshn-docker/knotci:v1.1.4 bash`
+`docker run --rm -it -v FULLPATHTOZONEFILES:/zones vshn/knotci bash`
 
 ### build.sh
 
