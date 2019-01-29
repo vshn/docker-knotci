@@ -15,7 +15,7 @@ The CI process is configured in the hidden file `.gitlab-ci.yml` (see example be
 ### Example `.gitlab-ci.yml`
 
 ```
-image: registry.vshn.net/vshn-docker/knotci:v1.1.4
+image: docker.io/vshn/knotci:latest
 
 zonedelivery:
   script:
