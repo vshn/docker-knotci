@@ -41,6 +41,20 @@ function revertzonefile {
   fi
 }
 
+# check if any files are missing newline
+EOLERROR=0
+for file in *.zone; do
+  if ! tail -n1 "$file" | read -r _; then
+    log_info1 "Missing EOF newline in zone ${file}"
+    EOLERROR=1
+  fi
+done
+
+if [ $EOLERROR -ne 0 ]; then
+    >&2 echo "FAILED - found zonefiles with missing EOF newline"
+    exit 1
+fi
+
 # Set up SSH
 log_info1 "setting up a temporary SSH agent for ${SSH_USER}@${NS_HIDDENMASTER}"
 eval "$(ssh-agent -s)" > /dev/null 2>&1
