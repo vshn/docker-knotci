@@ -1,6 +1,6 @@
-FROM gliderlabs/alpine:latest
+FROM docker.io/library/alpine:3.8
 
-RUN apk-install \
+RUN apk add --no-cache \
     bash \
     bind \
     bind-tools \
@@ -8,7 +8,7 @@ RUN apk-install \
     git \
     rsync
 
-ADD *.sh /usr/local/bin/
-ADD rsyncignore /etc/
+COPY *.sh /usr/local/bin/
+COPY rsyncignore /etc/
 
 WORKDIR /zones
